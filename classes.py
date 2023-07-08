@@ -1,137 +1,100 @@
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium import webdriver
-import time
+import json
 import sqlite3
-from datetime import datetime
-import requests
-from colorama import Fore, Style
-
-class SeleniumBrowser:
-    def __init__(self):
-        self.driver = None
-
-    def open_browser(self):
-        chrome_options = Options()
-        chrome_options.headless = False
-        self.driver = webdriver.Chrome(options=chrome_options)
-        return self.driver
-
-class Banco:
-    def __init__(self, db_name):
-        self.db_name = db_name
-        self.db_connection = None
-
-    def conectar(self):
-        self.db_connection = sqlite3.connect(self.db_name)
-
-    def fechar_conexao(self):
-        if self.db_connection:
-            self.db_connection.close()
-
-    def criar_tabela(self):
-        cursor = self.db_connection.cursor()
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS dados (
-                nome TEXT PRIMARY KEY,
-                preco REAL,
-                data_hora TEXT
-            )
-        ''')
-        self.db_connection.commit()
-
-    def inserir_dados(self, nome, preco, data_hora):
-        cursor = self.db_connection.cursor()
-        cursor.execute('''
-            INSERT OR REPLACE INTO dados (nome, preco, data_hora) VALUES (?, ?, ?)
-        ''', (nome, preco, data_hora))
-        self.db_connection.commit()
-
-class BuscaSteam:
-    def __init__(self, link, db_name):
-        self.link = link
-        self.navegador = None
-        self.banco = Banco(db_name)
-
-    def abrir_navegador(self):
-        self.navegador = SeleniumBrowser().open_browser()
-
-    def fechar_navegador(self):
-        if self.navegador:
-            self.navegador.quit()
-
-    def fazer_scrapping(self):
-        if not self.navegador:
-            raise Exception("Navegador não foi aberto. Chame o método abrir_navegador() primeiro.")
-
-        self.banco.conectar()
-        self.banco.criar_tabela()
-
-        for link in self.link:
-            self.navegador.get(link)
-            time.sleep(10)
-            try:
-                preco_element = self.navegador.find_element(By.XPATH, '//*[@id="market_commodity_forsale"]/span[2]')
-                preco = preco_element.text
-            except NoSuchElementException:
-                raise Exception(f"Não foi possível encontrar o preço de ({link}).")
-            
-            try:
-                nome_element = self.navegador.find_element(By.XPATH, '//*[@id="largeiteminfo_item_name"]')
-                nome = nome_element.text
-            except NoSuchElementException:
-                raise Exception(f"Não foi possível encontrar o nome de ({link}).")
-
-            data_hora = datetime.now().strftime('%d/%m/%y - %H:%M:%S')
-
-            print(f'Dados de:  {Fore.BLUE} {nome} {Fore.WHITE} encontrados às {Fore.BLUE} {data_hora} {Style.RESET_ALL}, atualizando no banco...')
-            self.banco.inserir_dados(nome, preco, data_hora)
-
-        self.banco.fechar_conexao()
-        self.fechar_navegador()
-        print(f'{Fore.GREEN}Navegador fechado.{Style.RESET_ALL}')
+import time
+import urllib.request
 
 class Inventario:
-    def __init__(self, itens, db_name):
-        self.itens = itens
-        self.db_name = db_name
 
-    def calcula_valor_por_item(self):
+    def __init__(self):
+        self.item_id = None
+        self.item_link = None
+        self.data = None
+        self.custo_por_item = None
+        self.numero_de_itens = None
+        self.preço_atual = None
+        self.item_nome = None
+        self.valor_total = None
+        self.custo_total = None
+        self.porcentagem_retorno_total = None
+        self.retorno_total = None
 
-        requisicao = requests.get('https://economia.awesomeapi.com.br/all/USD-BRL')
-        cotacao_atual = requisicao.json()
-        valor_cotacao = cotacao_atual['USD']['bid']
-        valor_cotacao = float(valor_cotacao)
-        valor_cotacao = round(valor_cotacao, 2)
+        self.cursor = None
+        self.conexao = None
 
-        valores = {}
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
+    def banco(self, nome_banco_de_dados):
 
-        for nome_item, quantidade in self.itens.items():
-            preco_str = self.obter_valor_por_item(cursor, nome_item)
-            preco_float = self.parse_preco(preco_str)        
-            quantidade = int(quantidade)
-            valor = (preco_float * quantidade) * valor_cotacao
-            valor = round(valor, 2)
-            
-            valores[nome_item] = valor
+        self.conexao = sqlite3.connect(nome_banco_de_dados)
+        self.cursor = self.conexao.cursor()
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS inventory "
+                            "(id_item INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            "data STRING NOT NULL, "
+                            "item_nome TEXT NOT NULL, "
+                            "custo_por_item REAL NOT NULL, "
+                            "numero_de_itens INTEGER NOT NULL, "
+                            "preço_atual REAL NOT NULL, "
+                            "custo_total REAL NOT NULL, "
+                            "valor_total REAL NOT NULL, "
+                            "porcentagem_retorno_total REAL NOT NULL, "
+                            "retorno_total REAL, "
+                            "item_link TEXT NOT NULL)")
 
-        conn.close()
+        return self.cursor
 
-        return valores
 
-    def obter_valor_por_item(self, cursor, nome_item):
-        cursor.execute("SELECT preco FROM dados WHERE nome LIKE ?", ('%' + nome_item + '%',))
-        resultado = cursor.fetchone()
+    def get_dados(self, nome, custoporitem, quantidade, p_atual, link):
 
-        if resultado:
-            return resultado[0]
+        self.nome = nome
+        self.custoporitem = custoporitem
+        self.custoporitem = self.custoporitem.replace(',','.')
+        self.custoporitem = float(self.custoporitem)
+        self.quantidade = quantidade
+        self.p_atual = p_atual
+        self.link = link
+
+        #data (get da inferface?)
+        data_atual = 'Place Holder'
+
+        #item_nome (if vazio, tirar da url, else, usa o nome informado)
+        if self.nome == '':
+            hash_link = link[47:]
+            self.nome = hash_link.replace("%20", " ").replace("%7C", "|").replace("%28", "(").replace("%29", ")").replace("%26", "&")
+            print('nome vazio, teste de tipo abaixo:')
+            print(type(self.nome))
         else:
-            return '$0.00'
+            print('nome preenchido, teste de tipo abaixo:')
+            print(type(self.nome))
 
-    def parse_preco(self, preco):
-        preco = preco.replace('$', '')
-        preco = preco.replace(',', '')
-        return float(preco)
+        #preço_atual (usar o request)
+        hash_link = link[47:]
+        url_destino = 'https://steamcommunity.com/market/priceoverview/?appid=730&currency=7&market_hash_name=' + hash_link
+        url_request = urllib.request.urlopen(url_destino)
+        data = json.loads(url_request.read().decode())
+
+        self.p_atual = str(data.get('lowest_price'))
+        self.p_atual = float(self.p_atual.replace('R$', '').replace(',', '.'))
+
+        #custo_total (numero_de_itens * custo_por_item)
+        custo_total = self.quantidade * self.custoporitem
+
+        #valor_total (numero_de_itens * preço_atual)
+        valor_total = self.quantidade * self.p_atual
+
+        #porcentagem_retorno_total - round(((preço_atual - custo_por_item) / custo_por_item) * 100, 2)
+        porcentagem_retorno_total = round(((self.p_atual - self.custoporitem) / self.custoporitem) * 100, 2)
+
+        #retorno_total (valor_total - custo_total)
+        retorno_total = valor_total - custo_total
+
+        print(f'nome:{self.nome}')
+        print(f'custo por item: {self.custoporitem}')
+        print(f'quantidade: {self.quantidade}')
+        print(f'preço atual: {self.p_atual}')
+        print(f'link: {self.link}')
+        print(f'custo total: {custo_total}')
+        print(f'valor total: {valor_total}')
+        print(f'porentagem de retorno total: {porcentagem_retorno_total}')
+        print(f'retorno total: {retorno_total}')
+
+        query = 'INSERT INTO inventory (data, item_nome, custo_por_item, numero_de_itens, preço_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, item_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        self.cursor.execute(query, (data_atual, self.nome, self.custoporitem, self.quantidade, self.p_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, self.link))
+        self.cursor.connection.commit()

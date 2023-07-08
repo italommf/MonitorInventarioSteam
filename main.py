@@ -1,93 +1,67 @@
-from classes import BuscaSteam, Inventario
-from colorama import Style, Fore
+from classes import Inventario
+import tkinter as tk
+from tkinter import ttk
 
-caixa_fraturada = 'https://steamcommunity.com/market/listings/730/Fracture%20Case'
-apeks = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Apeks%20%28Holo%29%20%7C%20Paris%202023'
-pain = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20paiN%20Gaming%20%28Holo%29%20%7C%20Paris%202023'
-navi = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Natus%20Vincere%20%28Holo%29%20%7C%20Paris%202023'
-fluxo = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Fluxo%20%28Holo%29%20%7C%20Paris%202023'
-heroic = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Heroic%20%28Holo%29%20%7C%20Paris%202023'
-nip = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Ninjas%20in%20Pyjamas%20%28Holo%29%20%7C%20Paris%202023'
-gamer_legion = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20GamerLegion%20%28Holo%29%20%7C%20Paris%202023'
-furia = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20FURIA%20(Holo)%20%7C%20Paris%202023'
-nine = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%209INE%20(Holo)%20%7C%20Paris%202023'
-fnatic = 'https://steamcommunity.com/market/listings/730/Sticker%20%7C%20Fnatic%20(Holo)%20%7C%20Paris%202023'
-capsula_lendas = 'https://steamcommunity.com/market/listings/730/Paris%202023%20Legends%20Sticker%20Capsule'
-capsula_desafiantes = 'https://steamcommunity.com/market/listings/730/Paris%202023%20Challengers%20Sticker%20Capsule'
-capsula_regionais = 'https://steamcommunity.com/market/listings/730/Paris%202023%20Contenders%20Sticker%20Capsule'
 
-links = [
-    caixa_fraturada,        # 2,80 cada - 280 reais - 5 unidades
-    #apeks, 
-    #pain, 
-    #navi, 
-    #fluxo,
-    #heroic, 
-    #nip, 
-    #gamer_legion,
-    furia,                  # 45,00 cada - 225 reais - 5 unidades
-    nine,                   # 20,00 cada - 100 reais - 5 unidades
-    fnatic,                 # 20,00 cada - 200 reais - 10 unidades
-    capsula_lendas,         # 1,29 cada - 51,60 reais - 40 unidades
-    capsula_desafiantes,    # 1,29 cada - 51,60 reais - 40 unidades
-    capsula_regionais,      # 1,29 cada - 51,60 reais - 40 unidades
-    ]
 
-itens = {
-    'Caixa Fraturada': 100,     
-    #'Apeks': 5,                 
-    #'Pain': 5,
-    #'natus': 5,
-    #'fluxo':5,
-    #'heroic': 5,
-    #'ninjas in': 5,
-    #'gamerlegion': 5,
-    'furia': 5,
-    '9ine': 5,
-    'fnatic': 10,
-    'Lendas do Paris 2023': 40,
-    'Desafiantes do Paris 2023': 40,
-    'das Desafiantes Regionais do Paris 2023': 40
+#mainframe
+window = tk.Tk()
+window.title('Monitor de Inventário Steam - by Brook')
+window.geometry('600x400')
 
-}
+bd = 'steamInv.db'
 
-db_name = "dados.db"
-busca = BuscaSteam(links, db_name)
+inv = Inventario()
+inv.banco(bd)
 
-try:
-    busca.abrir_navegador()
-    print(f'\n{Fore.GREEN}Navegador aberto!{Style.RESET_ALL}')
-except Exception:
-    print(f"{Fore.RED}Não foi possível abrir o navegador{Style.RESET_ALL}")
+# o nome tira do hash
+nomeitem_str = tk.StringVar()
+nomeitem_entry = ttk.Entry(window, textvariable = nomeitem_str)
+nomeitem_entry_label = ttk.Label(text = 'Nome do Item (Opcional)')
+nomeitem_entry.pack()
+nomeitem_entry_label.pack()
 
-try:
-    print(f'{Fore.GREEN}Inciando raspagem de dados...{Style.RESET_ALL}\n')
-    busca.fazer_scrapping()
-except Exception:
-    print(f"{Fore.RED}Não foi possível fazer o scrapping de dados{Style.RESET_ALL}")
+# id (auto incrementavel)
 
-valor_item = Inventario(itens, db_name)
-valor = valor_item.calcula_valor_por_item()
+#data (botão de data?)
 
-valor_total = 0
+#custo por item
+custoporitem_int = tk.StringVar(value = '1,29') # mudar para float
+custoporitem_entry = ttk.Entry(window, textvariable = custoporitem_int)
+custoporitem_entry_label = ttk.Label(text = 'Custo por Item')
+custoporitem_entry.pack()
+custoporitem_entry_label.pack()
 
-print('')
-for chave, valor_item in valor.items():
-    print(f'Item: {Fore.LIGHTBLUE_EX} {chave} {Style.RESET_ALL}- Valor total: {Fore.LIGHTGREEN_EX} R$ {valor_item} {Style.RESET_ALL}')
-    valor_total += valor_item
+#numero de itens
+numerodeitens_int = tk.IntVar(value = 100)
+numerodeitens_entry = ttk.Entry(window, textvariable = numerodeitens_int)
+numerodeitens_entry_label = ttk.Label(text = 'Numero De Itens')
+numerodeitens_entry.pack()
+numerodeitens_entry_label.pack()
 
-valor_inicial = 959.8 
-valor_atual = round(valor_total, 2)
+#preço atual (pode deixar vazio pq a atualização é chamada pela url)
+precoatual_int = tk.IntVar()
+precoatual_entry = ttk.Entry(window, textvariable = precoatual_int)
+precoatual_entry_label = ttk.Label(text = 'Preço atual do Item')
+precoatual_entry.pack()
+precoatual_entry_label.pack()
 
-print(f'\nValor inicial: {Fore.GREEN} R$ {valor_inicial} {Style.RESET_ALL}')
-print(f'O valor atual dos investimentos é: {Fore.GREEN} R$ {valor_atual} {Style.RESET_ALL}')
+#link
+link_str = tk.StringVar(value = 'https://steamcommunity.com/market/listings/730/Paris%202023%20Legends%20Sticker%20Capsule')
+link_entry = ttk.Entry(window, textvariable = link_str)
+link_entry_label = ttk.Label(text = 'Link do Item')
+link_entry.pack()
+link_entry_label.pack()
 
-if valor_inicial > valor_atual:
-    deficit = valor_inicial - valor_atual
-    deficit = round(deficit, 2)
-    print(f'\nDeficit de {Fore.RED} R${deficit} {Style.RESET_ALL}\n')
+#botão ADICIONAR
+botao_adicionar = ttk.Button(window, 
+                             text = 'Adicionar Item à Tabela',
+                             command = lambda: inv.get_dados(nomeitem_str.get(), 
+                                                             custoporitem_int.get(), 
+                                                             numerodeitens_int.get(), 
+                                                             precoatual_int.get(), 
+                                                             link_str.get()))
+botao_adicionar.pack()
 
-else:
-    lucro = valor_atual - valor_inicial
-    lucro = round(lucro, 2)
-    print(f'\nLucro de {Fore.GREEN} R${lucro} {Style.RESET_ALL}\n')
+#run
+window.mainloop()
