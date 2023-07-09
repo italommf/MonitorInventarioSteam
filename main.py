@@ -14,6 +14,17 @@ bd = 'steamInv.db'
 inv = Inventario()
 inv.banco(bd)
 
+#grid
+
+window.columnconfigure(0, weight = 1) # Coluna 0, 1 coluna de tamanho
+window.columnconfigure(1, weight = 1) # Coluna 1, 1 coluna de tamanho
+window.columnconfigure(2, weight = 2) # Coluna 2, 2 colunas de tamanho
+
+window.rowconfigure(0, weight = 1)
+window.rowconfigure(1, weight = 1)
+window.rowconfigure(2, weight = 1)
+
+
 # o nome tira do hash
 nomeitem_str = tk.StringVar()
 nomeitem_entry = ttk.Entry(window, textvariable = nomeitem_str)
