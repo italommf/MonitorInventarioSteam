@@ -1,3 +1,4 @@
+import datetime
 import json
 import sqlite3
 import time
@@ -52,7 +53,8 @@ class Inventario:
         self.link = link
 
         #data (get da inferface?)
-        data_atual = 'Place Holder'
+        data_atual = datetime.now().strftime('%d/%m/%Y')
+
 
         #item_nome (if vazio, tirar da url, else, usa o nome informado)
         if self.nome == '':
@@ -98,3 +100,4 @@ class Inventario:
         query = 'INSERT INTO inventory (data, item_nome, custo_por_item, numero_de_itens, preço_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, item_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         self.cursor.execute(query, (data_atual, self.nome, self.custoporitem, self.quantidade, self.p_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, self.link))
         self.cursor.connection.commit()
+    

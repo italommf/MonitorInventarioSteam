@@ -37,14 +37,14 @@ nomeitem_entry_label.pack()
 #data (botão de data?)
 
 #custo por item
-custoporitem_int = tk.StringVar(value = '1,29') # mudar para float
+custoporitem_int = tk.StringVar() # mudar para float
 custoporitem_entry = ttk.Entry(window, textvariable = custoporitem_int)
 custoporitem_entry_label = ttk.Label(text = 'Custo por Item')
 custoporitem_entry.pack()
 custoporitem_entry_label.pack()
 
 #numero de itens
-numerodeitens_int = tk.IntVar(value = 100)
+numerodeitens_int = tk.IntVar()
 numerodeitens_entry = ttk.Entry(window, textvariable = numerodeitens_int)
 numerodeitens_entry_label = ttk.Label(text = 'Numero De Itens')
 numerodeitens_entry.pack()
@@ -58,7 +58,7 @@ precoatual_entry.pack()
 precoatual_entry_label.pack()
 
 #link
-link_str = tk.StringVar(value = 'https://steamcommunity.com/market/listings/730/Paris%202023%20Legends%20Sticker%20Capsule')
+link_str = tk.StringVar()
 link_entry = ttk.Entry(window, textvariable = link_str)
 link_entry_label = ttk.Label(text = 'Link do Item')
 link_entry.pack()
