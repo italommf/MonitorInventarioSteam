@@ -1,7 +1,7 @@
 import datetime
 import json
 import sqlite3
-import time
+from datetime import datetime
 import urllib.request
 
 class Inventario:
@@ -101,3 +101,27 @@ class Inventario:
         self.cursor.execute(query, (data_atual, self.nome, self.custoporitem, self.quantidade, self.p_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, self.link))
         self.cursor.connection.commit()
     
+
+    def obter_preco_atualizado(self, link):
+        hash_link = link[47:]
+        url_destino = 'https://steamcommunity.com/market/priceoverview/?appid=730&currency=7&market_hash_name=' + hash_link
+        url_request = urllib.request.urlopen(url_destino)
+        data = json.loads(url_request.read().decode())
+
+        preco_atualizado = str(data.get('lowest_price'))
+        preco_atualizado = float(preco_atualizado.replace('R$', '').replace(',', '.'))
+
+        return preco_atualizado
+
+    def atualizar_precos(self):
+        self.cursor.execute("SELECT item_link FROM inventory")
+        links = self.cursor.fetchall()
+
+        for link in links:
+            link = link[0]
+
+            preco_atualizado = self.obter_preco_atualizado(link)
+
+            self.cursor.execute("UPDATE inventory SET preço_atual=? WHERE item_link=?", (preco_atualizado, link))
+
+        self.conexao.commit()

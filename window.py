@@ -1,8 +1,8 @@
 from tkinter import *
-import tkinterhtml as tkhtml
 from classes import Inventario
 import os
 import sqlite3
+import time
 
 
 def btn_clicked():
@@ -84,12 +84,16 @@ b2 = Button(
 
 b2.place(x=367, y=578, width=173, height=44)
 
+def btn_atualizar_inventario():
+    inv.atualizar_precos()
+    atualizar_interface()
+
 button_atualizar = PhotoImage(file=os.path.join(os.path.dirname(__file__), "gui", "button_atualizar_val.png"))
 b3 = Button(
     image=button_atualizar,
     borderwidth=0,
     highlightthickness=0,
-    command=btn_clicked,
+    command=btn_atualizar_inventario,
     relief="flat"
 )
 
@@ -166,7 +170,6 @@ b1 = Button(
     image=button_adicionar,
     borderwidth=0,
     highlightthickness=0,
-    #command = lambda: print(nome.get(), custo, quantidade.get(), preco_atual.get(), market_link.get()),
     command = lambda: insere_atualiza(),
     relief="flat")
                 
@@ -251,8 +254,7 @@ for linha in dados:
     # Inserir a linha formatada na caixa de texto
     texto_multilinhas.insert(END, linha_formatada)
 
-def apagar_item_selecionado():
-    
+def apagar_item_selecionado():    
     indice_selecionado = texto_multilinhas.curselection()
 
     if indice_selecionado:       
@@ -273,12 +275,12 @@ b0 = Button(
 
 b0.place(x=61, y=547, width=173, height=44)
 
+def get_icon_path():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    icon_path = os.path.join(current_dir, "gui", "icone.ico")
+    return icon_path
 
-
-
+window.iconbitmap(get_icon_path())
+window.title('Monitor de Inventário - Brook')
 window.resizable(False, False)
 window.mainloop()
- 
-
-
-
