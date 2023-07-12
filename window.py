@@ -39,18 +39,20 @@ def atualizar_interface():
     cursor.execute("SELECT SUM(custo_total) FROM inventory")
     result = cursor.fetchone()
     coluna_custo_total = result[0] if result and result[0] else 0
-    multiplicador = (coluna_valor_total * 0.85) / coluna_custo_total
-    multiplicador = round(multiplicador, 2) if result else 0
+
+    if coluna_custo_total != 0:
+        multiplicador = (coluna_valor_total * 0.85) / coluna_custo_total
+        multiplicador = round(multiplicador, 2)
+    else:
+        multiplicador = 0
+
     canvas.itemconfig(mult, text=f'{multiplicador}x')
+
 
     cursor.execute("SELECT SUM(valor_total) * 0.85 AS valor_descontado FROM inventory")
     r_valor_total_l = cursor.fetchone()[0]
     r_valor_total_l = 0 if r_valor_total_l is None else round(r_valor_total_l, 2)
     canvas.itemconfig(valor_total_liquido, text=f'{r_valor_total_l} R$')
-
-    lucro = round(r_valor_total_l - r_custo_total, 2)
-    canvas.itemconfig(lucro_total, text=f'{lucro} R$')
-
 
     lucro = round(r_valor_total_l - r_custo_total, 2)
     canvas.itemconfig(lucro_total, text=f'{lucro} R$')
@@ -220,16 +222,16 @@ cursor.execute("SELECT SUM(custo_total) FROM inventory")
 result = cursor.fetchone()
 coluna_custo_total = result[0] if result[0] else 0
 
-multiplicador = (coluna_valor_total * 0.85) / coluna_custo_total
-print(multiplicador, coluna_valor_total, coluna_custo_total)
-
-if result:
+if coluna_custo_total != 0:
+    multiplicador = (coluna_valor_total * 0.85) / coluna_custo_total
     multiplicador = round(multiplicador, 2)
 else:
     multiplicador = 0
 
+#print(multiplicador, coluna_valor_total, coluna_custo_total)
+
 mult = canvas.create_text(505, 508.5, text=f'{multiplicador}x', fill="#ffffff", font=("Alata-Regular", int(tam_fonte)))
-print(multiplicador, coluna_valor_total, coluna_custo_total)
+#print(multiplicador, coluna_valor_total, coluna_custo_total)
 
 if result[0] is None or r_valor_total_b is None:
     lucro = 0

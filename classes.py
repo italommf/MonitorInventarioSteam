@@ -41,7 +41,6 @@ class Inventario:
 
         return self.cursor
 
-
     def get_dados(self, nome, custoporitem, quantidade, p_atual, link):
 
         self.nome = nome
@@ -52,21 +51,12 @@ class Inventario:
         self.p_atual = p_atual
         self.link = link
 
-        #data (get da inferface?)
         data_atual = datetime.now().strftime('%d/%m/%Y')
 
-
-        #item_nome (if vazio, tirar da url, else, usa o nome informado)
         if self.nome == '':
             hash_link = link[47:]
             self.nome = hash_link.replace("%20", " ").replace("%7C", "|").replace("%28", "(").replace("%29", ")").replace("%26", "&")
-            print('nome vazio, teste de tipo abaixo:')
-            print(type(self.nome))
-        else:
-            print('nome preenchido, teste de tipo abaixo:')
-            print(type(self.nome))
 
-        #preço_atual (usar o request)
         hash_link = link[47:]
         url_destino = 'https://steamcommunity.com/market/priceoverview/?appid=730&currency=7&market_hash_name=' + hash_link
         url_request = urllib.request.urlopen(url_destino)
@@ -87,6 +77,7 @@ class Inventario:
         #retorno_total (valor_total - custo_total)
         retorno_total = valor_total - custo_total
 
+        
         print(f'nome:{self.nome}')
         print(f'custo por item: {self.custoporitem}')
         print(f'quantidade: {self.quantidade}')
@@ -96,7 +87,7 @@ class Inventario:
         print(f'valor total: {valor_total}')
         print(f'porentagem de retorno total: {porcentagem_retorno_total}')
         print(f'retorno total: {retorno_total}')
-
+        
         query = 'INSERT INTO inventory (data, item_nome, custo_por_item, numero_de_itens, preço_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, item_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         self.cursor.execute(query, (data_atual, self.nome, self.custoporitem, self.quantidade, self.p_atual, custo_total, valor_total, porcentagem_retorno_total, retorno_total, self.link))
         self.cursor.connection.commit()
@@ -158,17 +149,12 @@ class Inventario:
 
     def update_price(self):
         row = self.cursor.execute("SELECT item_link FROM inventory").fetchall()
-        print(row)  # ================================================================================================================================
-
-        all_links = [item[0] for item in row]  # row é uma lista de tuplas, ele acessa o primeiro elemento da tupla dentro da lista
-        # primeiro elemento da tupla (item[0]) FOR item IN lista de tuplas (row)
-
-        print(all_links)  # ================================================================================================================================
+        
+        all_links = [item[0] for item in row]  
 
         for url in all_links:
-            print(url)  # ==================================================================================================================================
+            
             market_hash_name = url[47:]
-            print(f'a partir do 47: {market_hash_name}')  # =================================================================================================
 
             target_url = "https://steamcommunity.com/market/priceoverview/?appid=730&currency=7&market_hash_name=" + market_hash_name  # + currency=7
             url_request = urllib.request.urlopen(target_url)
@@ -184,6 +170,8 @@ class Inventario:
                 item_price = 0.0  # Define um valor padrão para o preço se estiver vazio
             self.cursor.execute("UPDATE inventory SET preço_atual = ? WHERE item_link = ?", (item_price, url))
             self.cursor.connection.commit()
+
+            print(f'item atualizado: {item_name}')
 
 
     def item_list_update(self):
